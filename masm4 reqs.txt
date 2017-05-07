@@ -1,0 +1,30 @@
+MASM4
+For this assignment, you will be creating a Menu driver program that allows the user to test all of your string macros that you created for MASM3 plus some additional functionality.
+1. Create an array of 10 empty strings.
+2. Allow the user to enter a string and store it in the array.
+3. If the array is full, do not allow the user to store any more strings until there is room.
+4. Allow the user to delete a string.
+5. Allow the user to see the entire array of strings.
+6. Allow the user to search for a substring within the entire array.
+More details to follow ......
+
+
+
+MASM4                                STRING MANAGER
+<1> View all strings
+<2> Add string
+<3> Delete string
+<4> Edit string
+<5> String search
+<6> String Array Memory Consumption
+<7> Quit
+
+
+1. +0.5 ec
+	error message, give feedback
+	pause, press enter to continue
+
+2. max string length
+	128 bytes
+
+3. 
