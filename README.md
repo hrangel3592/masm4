@@ -1,5 +1,11 @@
+1. +0.5 ec
+	error message, give feedback
+	pause, press enter to continue
 
-each string max 128 bytes including null
+2. max string length
+	128 bytes
+
+3. capitalize THE
 
 MASM4
 For this assignment, you will be creating a Menu driver program that allows the user to test all of your string macros that you created for MASM3 plus some additional functionality.
