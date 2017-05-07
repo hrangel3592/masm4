@@ -10,42 +10,37 @@
 
 	.486					; enables assembly nonprivileged instructions for 80486 processor
 	
-	INCLUDE ..\Irvine\Irvine32.inc
-	INCLUDE ..\Irvine\Macros.inc
-	INCLUDELIB ..\Irvine\Irvine32.lib 
-	INCLUDELIB \masm32\lib\user32.lib
-	INCLUDELIB \masm32\lib\kernel32.lib
-
+	INCLUDE MASM4.inc
 	
-	EXTERNDEF String_equals:Near32, String_equalsIgnoreCase:Near32, String_copy:Near32,
-		   String_substring_1:Near32, String_substring_2:Near32, String_charAt:Near32,
-		   String_startsWith_1:Near32, String_startsWith_2:Near32, String_endsWith:Near32,
-		   String_length:Near32
-
-	EXTERNDEF String_indexOf_1:Near32, String_indexOf_2:Near32, String_indexOf_3:Near32,
-		   String_lastIndexOf_1:Near32, String_lastIndexOf_2:Near32,
-		   String_lastIndexOf_3:Near32, String_concat:Near32, String_replace:Near32,
-		   String_toLowerCase:Near32, String_toUpperCase:Near32
-
+	clearScreen PROTO Near32 STDCALL, dCount:dword
 ExitProcess	PROTO Near32 stdcall, dwExitCode:dword
 getch		PROTO Near32 stdcall	;Returns charater in the AL register
 putch		PROTO Near32 stdcall, bchar:byte
 
 	.data
-	strHeader	byte  9, "Name:        Hernan Rangel & ",			; name of author
-						 			   "Peter Tang", 13, 10, 				; name of author
-						 			9, "Program:     MASM3.asm", 13, 10,	; name of lab
-						 			9, "Class:       CS3B", 13, 10,	    ; name of class
-						 			9, "Date:        May 3, 2017", 13, 10, 0; date of lab
+strHeader	byte  13, 10, 9, 9, "MASM4 STRING MANAGER", 13, 10, 
+				  13, 10, 9, "Name:        Hernan Rangel & ",	; name of author
+				  "Peter Tang", 13, 10, 						; name of author
+			      9, "Program:     MASM4.asm", 13, 10, 			; name of lab
+			      9, "Class:       CS3B", 13, 10, 			    ; name of class
+			      9, "Date:        May 10, 2017", 13, 10, 0 	; date of lab
+strMenu  	byte  13, 10, 13, 10, 9, 
+				  "MASM4 STRING MANAGER MENU", 13, 10, 13, 10,
+				  "<1> View all strings", 13, 10, ;menu for available options
+				  "<2> Add string", 13, 10,
+				  "<3> Delete string", 13, 10,
+				  "<4> Edit string", 13, 10,
+				  "<5> String search", 13, 10,
+				  "<6> String Array Memory Consumption", 13, 10,
+				  "<7> Quit"
+			byte  9 DUP(13, 10)
+			byte  "Please insert selection: ", 0
+strCont 	byte  13, 10, "Press any key to continue...", 0		
 
-	strMenu  byte		"<1> View all strings", 13, 10, ;menu for available options
-									"<2> Add string", 13, 10,
-									"<3> Delete string", 13, 10,
-									"<4> Edit string", 13, 10,
-									"<5> String search", 13, 10,
-									"<6> String Array Memory Consumption", 13, 10,
-									"<7> Quit", 13, 10,
-									"Please insert selection: ", 0
+
+
+
+		
 	strInput byte  ?
 ;these strings are for testing the menu
 strError   byte   "Error", 13, 0
@@ -55,9 +50,17 @@ strDelete	 byte   "strDelete test", 13, 0
 strEdit	   byte   "strEdit test", 13, 0
 strSearch  byte   "strSearch test", 13, 0
 strMem	   byte   "strMem test", 13, 0
-	.code	; directive marking the program's entry point
-main PROC		; label for entry point of code segment
+	.code							; directive marking the program's entry point
+main PROC							; label for entry point of code segment
+		setWindow 175, 25
+				
+		INVOKE clearScreen, 50
 		mWriteString strHeader
+		INVOKE clearScreen, 9
+		mWriteString strCont
+		INVOKE ReadChar
+		
+		INVOKE clearScreen, 50
 		mWriteString strMenu
 		mov esi, 0; moves 0 into esi to be used as an index
 		jmp getNum
@@ -141,5 +144,23 @@ error:
 finish:
 		exit
 main ENDP
+
+
+
+	
+
+
+
+clearScreen PROC USES ECX, 
+	dCount:dword
+	mov ecx, dCount
+clsLoop:
+	call crlf
+	loop clsLoop
+	ret
+clearScreen ENDP
+
+
+
 
 END main
