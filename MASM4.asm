@@ -49,23 +49,12 @@ strCont 	byte  "Press any key to continue...", 0
 	
 dStrList	dword 10 DUP(0)
 strInput    byte  2 DUP(0)
-;strNum		byte  2 DUP(0)
 dStrCnt		dword 0
-;dTemp		dword 0
 strBuffer	byte  132 DUP (0)
 
-strTest		byte  "testing", 0
 
 
 
-;these strings are for testing the menu
-strError   byte   "Error", 13, 0
-strView    byte   "strView test", 13, 0
-strAdd	   byte   "strAdd test", 13, 0
-strDelete	 byte   "strDelete test", 13, 0
-strEdit	   byte   "strEdit test", 13, 0
-strSearch  byte   "strSearch test", 13, 0
-strMem	   byte   "strMem test", 13, 0
 	.code							; directive marking the program's entry point
 main PROC							; label for entry point of code segment
 		
@@ -98,7 +87,7 @@ main PROC							; label for entry point of code segment
 				INVOKE clearScreen, 25
 				mWriteString strMenu
 				INVOKE clearScreen,5
-				mWrite 'Invalid input.  "'
+				mWrite <9, 'Invalid input.  "'>
 				mWriteString strInput
 				mWrite <'" was entered.  '>
 				mWrite <"Please enter a number from 1 to 7.">
@@ -150,7 +139,7 @@ clearScreen ENDP
 viewStrings PROC Near32 STDCALL USES EAX,
 	lpStrList:dword
 
-;	showList "<1> View All Strings", 2, 6
+;	showList <"<1> View All Strings">, 2, 6
 	INVOKE clearScreen, 25
 	mWrite <9, "<1> View All Strings">
 	INVOKE clearScreen, 2	
@@ -185,7 +174,7 @@ getInputL:
 	mov ecx, lpStrCount
 	.IF (dword ptr [ecx] < 10)
 		INVOKE clearScreen, 3
-		mWrite "Press ENTER to cancel."
+		mWrite <9, "Press ENTER to cancel.">
 		INVOKE clearSCreen, 3
 		mWrite "Enter new string (Max 127 characters): "
 		
@@ -212,11 +201,7 @@ getInputL:
 			mov lpTemp, eax
 			push eax
 			push esi
-			CALL String_copy
-.IF (EAX != lpTemp)
-	mwrite "fucking christ"
-	call readchar
-.ENDIF						
+			CALL String_copy					
 			mov edi, lpStrList
 			mov esi, [dTemp]
 			mov [edi + esi * TYPE lpStrList], eax
@@ -226,7 +211,7 @@ getInputL:
 			INVOKE clearScreen, 2
 			showStrings 10, lpStrList
 			INVOKE clearScreen, 3
-			mWrite <"SUCCESSFULLY ADDED STRING: [">
+			mWrite <9, "SUCCESSFULLY ADDED STRING: [">
 						
 			INVOKE intasc32, ADDR strBuffer, [dTemp]
 			INVOKE putstring, ADDR strBuffer
@@ -247,13 +232,13 @@ getInputL:
 			INVOKE clearScreen, 2
 			showStrings 10, lpStrList
 			INVOKE clearScreen, 3
-			mWrite "** No string entered.  Returning to main menu. **"
+			mWrite <9, "*** No string entered.  Returning to main menu. ***">
 		.ENDIF
 		
 	.ELSE
 		INVOKE clearScreen, 3
-		mWrite "** ERROR String Manager is FULL.  "
-		mWrite "Please delete a string before adding. **"
+		mWrite <9, "*** ERROR String Manager is FULL.  ">
+		mWrite "Please delete a string before adding. ***"
 	.ENDIF
 
 	INVOKE clearScreen, 3
@@ -262,7 +247,7 @@ getInputL:
 returnL:
 	ret
 errorHeapL:
-	mWrite "**ERROR Not enough memory."
+	mWrite <9, "***ERROR Not enough memory.">
 		mWriteString strCont
 	INVOKE ReadChar
 	jmp returnL
@@ -315,7 +300,7 @@ delMainL:
 	mov ecx, lpStrCount
 	.IF (dword ptr [ecx] > 0)
 		INVOKE clearScreen, 3
-		mWrite "Press ENTER to cancel."
+		mWrite <9, "Press ENTER to cancel.">
 		INVOKE clearSCreen, 3
 		mWrite "Please enter string index to delete: "
 checkInputL:
@@ -339,7 +324,7 @@ getConfirmL:
 				INVOKE clearScreen, 2
 				showStrings 10, lpStrList
 				INVOKE clearScreen, 3
-				mWrite <"Deleting: [">
+				mWrite <9, "Deleting: [">
 				INVOKE putstring, ADDR strTemp
 				mWrite <"] ">
 				INVOKE putstring, [edi]
@@ -366,7 +351,7 @@ getConfirmL:
 					INVOKE clearScreen, 2
 					showStrings 10, lpStrList
 					INVOKE clearScreen, 3
-					mWrite <"SUCCESSFULLY DELETED STRING: [">
+					mWrite <9, "SUCCESSFULLY DELETED STRING: [">
 					INVOKE putstring, ADDR strTemp
 					mWrite <"] ">
 					
@@ -387,7 +372,7 @@ invalidInputL:
 				showStrings 10, lpStrList
 
 				INVOKE clearScreen, 3
-				mWrite 'Invalid input.  "'
+				mWrite <9, 'Invalid input.  "'>
 				INVOKE putstring, ADDR strTemp
 				mWrite <'" was entered.  '>
 				mWrite "Press ENTER to cancel."
@@ -403,12 +388,12 @@ invalidInputL:
 			INVOKE clearScreen, 2
 			showStrings 10, lpStrList
 			INVOKE clearScreen, 3
-			mWrite "** No string selected.  Returning to main menu. **"
+			mWrite <9, "*** No string selected.  Returning to main menu. ***">
 		.ENDIF
 	.ELSE
 		INVOKE clearScreen, 3
-		mWrite "** ERROR String Manager is EMPTY.  "
-		mWrite "Please add a string before deleting. **"
+		mWrite <9, "*** ERROR String Manager is EMPTY.  ">
+		mWrite "Please add a string before deleting. ***"
 	.ENDIF
 
 	INVOKE clearScreen, 3
@@ -442,7 +427,7 @@ editMainL:
 	mov ecx, lpStrCount
 	.IF (dword ptr [ecx] > 0)
 		INVOKE clearScreen, 3
-		mWrite "Press ENTER to cancel."
+		mWrite <9, "Press ENTER to cancel.">
 		INVOKE clearSCreen, 3
 		mWrite "Please enter string index to edit: "
 checkInputL:
@@ -467,7 +452,7 @@ getConfirmL:
 				INVOKE clearScreen, 2
 				showStrings 10, lpStrList
 				INVOKE clearScreen, 3
-				mWrite <"Editing: [">
+				mWrite <9, "Editing: [">
 				INVOKE putstring, ADDR strTemp
 				mWrite <"] ">
 				INVOKE putstring, [edi]
@@ -483,7 +468,7 @@ getConfirmL:
 					INVOKE clearScreen, 2
 					showStrings 10, lpStrList
 					INVOKE clearScreen, 3
-					mWrite <"Editing: [">
+					mWrite <9, "Editing: [">
 					INVOKE putstring, ADDR strTemp
 					mWrite <"] ">
 					INVOKE putstring, [edi]
@@ -525,7 +510,7 @@ getConfirmL:
 						INVOKE clearScreen, 2
 						showStrings 10, lpStrList
 						INVOKE clearScreen, 3
-						mWrite <"SUCCESSFULLY EDITED STRING: [">
+						mWrite <9, "SUCCESSFULLY EDITED STRING: [">
 									
 				;		INVOKE intasc32, ADDR strTemp, dTemp
 						INVOKE putstring, ADDR strTemp
@@ -539,7 +524,7 @@ getConfirmL:
 						INVOKE clearScreen, 2
 						showStrings 10, lpStrList
 						INVOKE clearScreen, 3
-						mWrite "** No replacement string entered.  Returning to previous menu. **"
+						mWrite <9, "*** No replacement string entered.  Returning to previous menu. ***">
 						INVOKE clearScreen, 3
 						mWriteString strCont
 						INVOKE ReadChar
@@ -552,7 +537,7 @@ getConfirmL:
 					INVOKE clearScreen, 2
 					showStrings 10, lpStrList
 					INVOKE clearScreen, 3
-					mWrite <"SUCCESSFULLY EDITED STRING: [">
+					mWrite <9, "SUCCESSFULLY EDITED STRING: [">
 					INVOKE putstring, ADDR strTemp
 					mWrite <"] ">
 					
@@ -572,7 +557,7 @@ invalidInputL:
 				INVOKE clearScreen, 2
 				showStrings 10, lpStrList
 				INVOKE clearScreen, 3
-				mWrite 'Invalid input.  "'
+				mWrite <9, 'Invalid input.  "'>
 				INVOKE putstring, ADDR strTemp
 				mWrite <'" was entered.  '>
 				mWrite "Press ENTER to cancel."
@@ -588,12 +573,12 @@ invalidInputL:
 			INVOKE clearScreen, 2
 			showStrings 10, lpStrList
 			INVOKE clearScreen, 3
-			mWrite "** No string selected.  Returning to main menu. **"
+			mWrite <9, "*** No string selected.  Returning to main menu. ***">
 		.ENDIF
 	.ELSE
 		INVOKE clearScreen, 3
-		mWrite "** ERROR String Manager is EMPTY.  "
-		mWrite "Please add a string before editing. **"
+		mWrite <9, "*** ERROR String Manager is EMPTY.  ">
+		mWrite "Please add a string before editing. ***"
 	.ENDIF
 
 	INVOKE clearScreen, 3
@@ -602,7 +587,7 @@ invalidInputL:
 returnL:	
 	ret
 errorHeapL:
-	mWrite "**ERROR Not enough memory."
+	mWrite <9, "*** ERROR Not enough memory.">
 		mWriteString strCont
 	INVOKE ReadChar
 	jmp returnL
@@ -633,7 +618,7 @@ searchMainL:
 	mov ecx, lpStrCount
 	.IF (dword ptr [ecx] > 0)
 		INVOKE clearScreen, 3
-		mWrite "Press ENTER to cancel."
+		mWrite <9, "Press ENTER to cancel.">
 		INVOKE clearSCreen, 3
 		mWrite "Please enter the target string: "
 checkInputL:  
@@ -743,7 +728,7 @@ initLoopL:
 			INVOKE clearScreen, 2
 			showStrings 10, lpStrList
 			INVOKE clearScreen, 3
-			mWrite "** No string selected.  Returning to main menu. **"
+			mWrite <9, "*** No string selected.  Returning to main menu. ***">
 			jmp returnL
 		.ENDIF 
 	
@@ -753,7 +738,7 @@ initLoopL:
 		lea esi, strFoundList
 		showstrings 10, esi
 		INVOKE clearScreen, 3
-		mWrite '"'
+		mWrite <9, '"'>
 		INVOKE putstring, addr strBuffer
 		mWrite '" was successfully found '
 		invoke intasc32, addr strBuffer, dFoundCount
@@ -782,8 +767,8 @@ initLoopL:
 		jmp searchMainL
 	.ELSE
 		INVOKE clearScreen, 3
-		mWrite "** ERROR String Manager is EMPTY.  "
-		mWrite "Please add a string before searching. **" 
+		mWrite <9, "*** ERROR String Manager is EMPTY.  ">
+		mWrite "Please add a string before searching. ***"
 	.ENDIF
 returnL:
 	INVOKE clearScreen, 3
@@ -792,7 +777,7 @@ returnL:
 
 	ret
 errorHeapL:
-	mWrite "**ERROR Not enough memory."
+	mWrite <9, "*** ERROR Not enough memory.">
 		mWriteString strCont
 	INVOKE ReadChar
 	jmp returnL

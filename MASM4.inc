@@ -17,7 +17,6 @@
 	INCLUDELIB \masm32\lib\user32.lib
 	INCLUDELIB \masm32\lib\kernel32.lib
 
-
 		   
 	; converts a string of characters to an equivalent 4-byte dword  value
 	; binary value is returned into EAX register, 
@@ -102,7 +101,7 @@ continueLoopL:
 ENDM
 
 
-
+comment #
 showList MACRO strTitle:REQ, midClear:REQ, 
 	botClear, botMsg, lastClear, lastMsg
 	INVOKE clearScreen, 25
@@ -122,3 +121,4 @@ showList MACRO strTitle:REQ, midClear:REQ,
 		mWrite "&lastMsg"
 	ENDIF
 ENDM
+#
