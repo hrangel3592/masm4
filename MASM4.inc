@@ -77,10 +77,10 @@ showStrings MACRO dNumStrings:REQ, lpStrArr:REQ
 	
 
 stringLoop:
-	mWrite <9, "<">
+	mWrite <9, "[">
 	INVOKE intasc32, ADDR strNum, dNum
 	mWriteString strNum
-	mWrite <"> ">
+	mWrite <"] ">
 	
 	mov ebx, [esi]
 	.IF (ebx == 0)

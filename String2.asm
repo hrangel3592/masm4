@@ -153,6 +153,7 @@ String_indexOf_2 ENDP			; end of proc
 String_indexOf_3 PROC Near32
 ;	lpString:dword,		; string address
 ;	lpSubstring:dword	; substring address
+;	dFromIndex:dword	; starting index
 ;	:dword				; index of first occurrence
 ;
 ; Receives an address to a string and a substring,
@@ -164,21 +165,35 @@ String_indexOf_3 PROC Near32
 ;-----------------------------------------------------
 	lpString          EQU [ebp + 8]		; original string
 	lpSubstring       EQU [ebp + 12]	; substring addr
+	dFromIndex		  EQU [ebp + 16]	; index to start
+	lpFoundNum		  EQU [ebp + 20]	; found times
 	dSubstringLength  EQU [ebp - 4]		; length of substr
 	dStringLength     EQU [ebp - 8]		; length of string
 	dStringIndex	  EQU [ebp - 12]	; string index
 	dSubStringIndex   EQU [ebp - 16]	; substring index
+	lpStringStart	  EQU [ebp - 20]	; new starting point
 	
 	enter 16,0						; set stack frame, 4 locals
 	push esi						; save esi values on stack
 	push edi						; save edi values on stack
 	push ecx						; save ecx values on stack
 	push ebx						; save ebx values on stack
+
+	mov ebx, dFromIndex				; set ebx to beg search pos
+	cmp ebx, 0						; compare index to 0
+	jl errorL						; exit if index < 0	
 	
-	push lpString					; push string addr to stack
+	mov edi, lpString				; set edi to string address
+	push edi						; push string addr to stack
 	CALL String_length				; get length of string
 	cmp eax, 0						; checks if string is empty
 	jle errorL						; jumps to error label
+	cmp ebx, eax					; check index input and length
+	jge errorL						; SF = OF, ZF = 1? index >= length
+	add edi, ebx					; adds index to string address
+	mov lpStringStart, edi			; save new starting point
+	push edi						; push string addr to stack
+	CALL String_length				; get length of string
 	mov dStringLength, eax			; set string length
 	
 	push lpSubstring				; push substring addr to stack
@@ -186,7 +201,7 @@ String_indexOf_3 PROC Near32
 	cmp eax, 0						; checks if string is empty
 	jle errorL						; jumps to error label
 	mov dSubstringLength, eax		; set substring length
-	mov esi, lpString				; set esi to string addr
+	mov esi, lpStringStart			; set esi to string addr
 	mov ecx, dStringLength			; set ecx to string length
 	sub ecx, dSubstringLength		; sub string len from substring len
 	mov ebx, dSubstringLength		; set ebx to substring length
