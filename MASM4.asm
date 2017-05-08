@@ -12,7 +12,7 @@
 	INCLUDE MASM4.inc
 	
 	clearScreen PROTO Near32 STDCALL, dCount:dword
-	showList PROTO Near32 STDCALL, lpStrList:dword
+	viewStrings PROTO Near32 STDCALL, lpStrList:dword
 	addString PROTO Near32 STDCALL, hHeap:HANDLE, lpStrList:dword, lpStrCount:dword	
 	getEmptyIndex PROTO Near32 STDCALL, lpStrList:dword, lpNum:dword
 	delString PROTO Near32 STDCALL, hHeap:HANDLE, lpStrList:dword, lpStrCount:dword
@@ -78,7 +78,7 @@ main PROC							; label for entry point of code segment
 		.ENDIF
 		
 		setWindow 170, 25
-				
+		
 		INVOKE clearScreen, 25
 		mWriteString strHeader
 		INVOKE clearScreen, 9
@@ -108,7 +108,7 @@ main PROC							; label for entry point of code segment
 			
 			
 			.IF(EAX == 1)
-				INVOKE showList, ADDR dStrList
+				INVOKE viewStrings, ADDR dStrList
 			.ELSEIF (EAX == 2)
 				INVOKE addString, hThisHeap, ADDR dStrList, ADDR dStrCnt
 			.ELSEIF (EAX == 3)
@@ -145,10 +145,12 @@ clsLoop:
 	ret
 clearScreen ENDP
 
+;comment @
 ;-----------------------------------------------------
-showList PROC Near32 STDCALL USES EAX,
+viewStrings PROC Near32 STDCALL USES EAX,
 	lpStrList:dword
 
+;	showList "<1> View All Strings", 2, 6
 	INVOKE clearScreen, 25
 	mWrite <9, "<1> View All Strings">
 	INVOKE clearScreen, 2	
@@ -157,7 +159,12 @@ showList PROC Near32 STDCALL USES EAX,
 	mWriteString strCont
 	INVOKE ReadChar
 	ret
-showList ENDP
+viewStrings ENDP
+;@
+
+
+
+
 
 ;-----------------------------------------------------
 addString PROC Near32 STDCALL USES EDI ECX EBX EAX ESI,
@@ -168,6 +175,7 @@ addString PROC Near32 STDCALL USES EDI ECX EBX EAX ESI,
 		  stdInHandle:HANDLE,
 		  lpTemp:dword
 getInputL:
+;	showList "<2> Add String", 2
 	INVOKE clearScreen, 25
 	mWrite <9, "<2> Add String">
 	INVOKE clearScreen, 2
@@ -756,18 +764,18 @@ initLoopL:
 		.ELSE
 			mWrite " times."
 		.ENDIF
-;comment @		
-		mov ecx, LENGTHOF strFoundList
-		
-deallocLoop:
+
+		mov ecx, 0
+		.WHILE (ecx < 10)
 		lea esi, strFoundList
-		lea edi, dword ptr [esi + ecx * TYPE strFoundList - TYPE strFoundList]
+		lea edi, [esi + ecx * TYPE strFoundList]
 		mov ebx, [edi]
 		.IF (ebx != 0)
 			INVOKE HeapFree, hHeap, 0, [edi]
 		.ENDIF
-		loop deallocLoop
-;
+			inc ecx
+		.ENDW 
+		
 		INVOKE clearScreen, 3
 		mWriteString strCont
 		INVOKE ReadChar	

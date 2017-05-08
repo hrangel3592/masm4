@@ -16,6 +16,8 @@
 	INCLUDELIB ..\Irvine\Irvine32.lib 
 	INCLUDELIB \masm32\lib\user32.lib
 	INCLUDELIB \masm32\lib\kernel32.lib
+
+
 		   
 	; converts a string of characters to an equivalent 4-byte dword  value
 	; binary value is returned into EAX register, 
@@ -74,7 +76,6 @@ showStrings MACRO dNumStrings:REQ, lpStrArr:REQ
 	mov dNum, 0
 	mov ecx, dNumStrings
 	mov esi, lpStrArr
-	
 
 stringLoop:
 	mWrite <9, "[">
@@ -99,3 +100,26 @@ continueLoopL:
 	pop esi
 	pop ecx
 ENDM
+
+
+comment @
+showList MACRO strTitle:REQ, midClear:REQ, 
+	botClear, botMsg, lastClear, lastMsg
+	INVOKE clearScreen, 25
+	mWrite <9, "&strTitle">
+	INVOKE clearScreen, midClear
+	showStrings 10, lpStrList
+	IFNB <botClear>
+		INVOKE clearScreen, botClear
+	ENDIF
+	IFNB <botMsg>
+		mWrite <9, "&botMsg">
+	ENDIF
+	IFNB <lastClear>
+		INVOKE clearScreen, lastClear
+	ENDIF
+	IFNB <lastMsg>
+		mWrite "&lastMsg"
+	ENDIF
+ENDM
+@	
