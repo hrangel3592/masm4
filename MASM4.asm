@@ -15,7 +15,9 @@
 	clearScreen PROTO Near32 STDCALL, dCount:dword
 	showList PROTO Near32 STDCALL, lpStrList:dword
 	addString PROTO Near32 STDCALL, hHeap:HANDLE, lpStrList:dword, lpStrCount:dword	
-getEmptyIndex PROTO Near32 STDCALL lpStrList:dword, lpNum:dword
+	getEmptyIndex PROTO Near32 STDCALL lpStrList:dword, lpNum:dword
+	delString PROTO Near32 STDCALL, hHeap:HANDLE, lpStrList:dword, lpStrCount:dword
+	editString
 
 	
 	getch		PROTO Near32 stdcall	;Returns charater in the AL register
@@ -76,7 +78,7 @@ main PROC							; label for entry point of code segment
 			mov hThisHeap, eax
 		.ENDIF
 		
-		setWindow 170, 25
+		setWindow 170, 300
 				
 		INVOKE clearScreen, 25
 		mWriteString strHeader
@@ -110,6 +112,10 @@ main PROC							; label for entry point of code segment
 				INVOKE showList, ADDR dStrList
 			.ELSEIF (EAX == 2)
 				INVOKE addString, hThisHeap, ADDR dStrList, ADDR dStrCnt
+			.ELSEIF (EAX == 3)
+				INVOKE delString, hThisHeap, ADDR dStrList, ADDR dStrCnt
+			.ELSEIF (EAX == 4)
+				INVOKE editString, hThisHeap, ADDR dStrList
 			.ENDIF
 
 			INVOKE clearScreen, 25
@@ -161,7 +167,7 @@ addString PROC Near32 STDCALL USES EDI ECX EBX EAX ESI,
 		  dTemp:dword,
 		  stdInHandle:HANDLE,
 		  lpTemp:dword
-
+getInputL:
 	INVOKE clearScreen, 25
 	mWrite <9, "<2> Add String">
 	INVOKE clearScreen, 2
@@ -195,14 +201,17 @@ addString PROC Near32 STDCALL USES EDI ECX EBX EAX ESI,
 				jmp errorHeapL
 			.ENDIF
 			
+			mov lpTemp, eax
 			push eax
 			push esi
 			CALL String_copy
-						
+.IF (EAX != lpTemp)
+	mwrite "fucking christ"
+	call readchar
+.ENDIF						
 			mov edi, lpStrList
 			mov esi, [dTemp]
 			mov [edi + esi * TYPE lpStrList], eax
-			mov lpTemp, eax
 			
 			INVOKE clearScreen, 25
 			mWrite <9, "<2> Add String">
@@ -219,7 +228,11 @@ addString PROC Near32 STDCALL USES EDI ECX EBX EAX ESI,
 			
 			mov ecx, lpStrCount
 			inc dword ptr [ecx]
-	
+			
+			INVOKE clearScreen, 3
+			mWriteString strCont
+			INVOKE ReadChar
+			jmp getInputL
 		.ELSE
 			INVOKE clearScreen, 25
 			mWrite <9, "<2> Add String">
@@ -275,5 +288,257 @@ getEmptyIndex PROC Near32 STDCALL USES ECX EAX ESI EDI,
 returnL:
 	ret
 getEmptyIndex ENDP
+
+
+;-----------------------------------------------------
+delString PROC Near32 STDCALL USES EDI ECX EBX EAX ESI,
+	hHeap:HANDLE,
+	lpStrList:dword,
+	lpStrCount:dword
+	LOCAL strTemp[2]:byte,
+		  StrBuff[2]:byte,
+		  lpTemp:dword,
+		  dTemp:dword
+delMainL:
+	INVOKE clearScreen, 25
+	mWrite <9, "<3> Delete String">
+	INVOKE clearScreen, 2
+	showStrings 10, lpStrList
+
+	mov ecx, lpStrCount
+	.IF (dword ptr [ecx] > 0)
+		INVOKE clearScreen, 3
+		mWrite "Press ENTER to cancel."
+		INVOKE clearSCreen, 3
+		mWrite "Please enter string index to delete: "
+checkInputL:
+		INVOKE getString, ADDR strTemp, 1
+		mov bl, [strTemp]
+		
+		.IF(bl != 0)
+			INVOKE ascint32, ADDR strTemp
+			mov ebx, eax
+			
+			mov esi, lpStrList
+			lea edi, [esi + ebx * TYPE lpStrList]
+			mov ecx, [edi]
+			.IF (ebx > 0 && ebx < 10 && ecx != 0)
+getConfirmL:
+				INVOKE clearScreen, 25
+				mWrite <9, "<3> Delete String">
+				INVOKE clearScreen, 2
+				showStrings 10, lpStrList
+				INVOKE clearScreen, 3
+				mWrite <"Deleting: [">
+				INVOKE putstring, ADDR strTemp
+				mWrite <"] ">
+				INVOKE putstring, [edi]
+				INVOKE clearScreen, 3
+				mWrite <"CONFIRM DELETION Y/N: ">
+				INVOKE getString, ADDR strBuffer, 1
+				mov bl, byte ptr [strBuffer]
+				and bl, 11011111b			; make uppercase
+				
+				.IF (bl == 'Y')
+					INVOKE HeapFree, hHeap, 0, [edi]
+					
+					.if eax == null
+						call crlf
+						call writewindowsmsg
+						call readchar
+					.endif
+
+					mov dword ptr [edi], 0
+					mov ecx, lpStrCount
+					dec dword ptr [ecx]
+					INVOKE clearScreen, 25
+					mWrite <9, "<3> Delete String">
+					INVOKE clearScreen, 2
+					showStrings 10, lpStrList
+					INVOKE clearScreen, 3
+					mWrite <"SUCCESSFULLY DELETED STRING: [">
+					INVOKE putstring, ADDR strTemp
+					mWrite <"] ">
+					
+					INVOKE clearScreen, 3
+					mWriteString strCont
+					INVOKE ReadChar
+					jmp delMainL					
+				.ELSEIF (bl == 'N')
+					jmp delMainL
+				.ELSE
+					jmp getConfirmL
+				.ENDIF
+			.ELSE
+				INVOKE clearScreen, 25
+				mWrite <9, "<3> Delete String">
+				INVOKE clearScreen, 2
+				showStrings 10, lpStrList
+
+				INVOKE clearScreen, 3
+				mWrite 'Invalid input.  "'
+				INVOKE putstring, ADDR strTemp
+				mWrite <'" was entered.  '>
+				mWrite "Press ENTER to cancel."
+				INVOKE clearSCreen, 3
+				mWrite "Please enter string index to delete: "
+				jmp checkInputL
+			.ENDIF
+			
+			
+		.ELSE
+			INVOKE clearScreen, 25
+			mWrite <9, "<3> Delete String">
+			INVOKE clearScreen, 2
+			showStrings 10, lpStrList
+			INVOKE clearScreen, 3
+			mWrite "** No string selected.  Returning to main menu. **"
+		.ENDIF
+	.ELSE
+		INVOKE clearScreen, 3
+		mWrite "** ERROR String Manager is EMPTY.  "
+		mWrite "Please add a string before deleting. **"
+	.ENDIF
+
+	INVOKE clearScreen, 3
+	mWriteString strCont
+	INVOKE ReadChar
+
+	ret
+
+delString ENDP
+
+
+
+
+;-----------------------------------------------------
+editString PROC Near32 STDCALL USES EDI ECX EBX EAX ESI,
+	hHeap:HANDLE,
+	lpStrList:dword
+	LOCAL strTemp[2]:byte,
+		  StrBuff[2]:byte,
+		  lpTemp:dword,
+		  dTemp:dword
+delMainL:
+	INVOKE clearScreen, 25
+	mWrite <9, "<4> Edit String">
+	INVOKE clearScreen, 2
+	showStrings 10, lpStrList
+
+	mov ecx, lpStrCount
+	.IF (dword ptr [ecx] > 0)
+		INVOKE clearScreen, 3
+		mWrite "Press ENTER to cancel."
+		INVOKE clearSCreen, 3
+		mWrite "Please enter string index to edit: "
+checkInputL:
+		INVOKE getString, ADDR strTemp, 1
+		mov bl, [strTemp]
+		
+		.IF(bl != 0)
+			INVOKE ascint32, ADDR strTemp
+			mov ebx, eax
+			
+			mov esi, lpStrList
+			lea edi, [esi + ebx * TYPE lpStrList]
+			mov ecx, [edi]
+			.IF (ebx > 0 && ebx < 10 && ecx != 0)
+getConfirmL:
+				INVOKE clearScreen, 25
+				mWrite <9, "<4> Edit String">
+				INVOKE clearScreen, 2
+				showStrings 10, lpStrList
+				INVOKE clearScreen, 3
+				mWrite <"Deleting: [">
+				INVOKE putstring, ADDR strTemp
+				mWrite <"] ">
+				INVOKE putstring, [edi]
+				INVOKE clearScreen, 3
+				mWrite <"CONFIRM DELETION Y/N: ">
+				INVOKE getString, ADDR strBuffer, 1
+				mov bl, byte ptr [strBuffer]
+				and bl, 11011111b			; make uppercase
+				
+				.IF (bl == 'Y')
+					INVOKE HeapFree, hHeap, 0, [edi]
+					
+					.if eax == null
+						call crlf
+						call writewindowsmsg
+						call readchar
+					.endif
+
+					mov dword ptr [edi], 0
+					mov ecx, lpStrCount
+					dec dword ptr [ecx]
+					INVOKE clearScreen, 25
+					mWrite <9, "<4> Edit String">
+					INVOKE clearScreen, 2
+					showStrings 10, lpStrList
+					INVOKE clearScreen, 3
+					mWrite <"SUCCESSFULLY editD STRING: [">
+					INVOKE putstring, ADDR strTemp
+					mWrite <"] ">
+					
+					INVOKE clearScreen, 3
+					mWriteString strCont
+					INVOKE ReadChar
+					jmp delMainL					
+				.ELSEIF (bl == 'N')
+					jmp delMainL
+				.ELSE
+					jmp getConfirmL
+				.ENDIF
+			.ELSE
+				INVOKE clearScreen, 25
+				mWrite <9, "<4> Edit String">
+				INVOKE clearScreen, 2
+				showStrings 10, lpStrList
+
+				INVOKE clearScreen, 3
+				mWrite 'Invalid input.  "'
+				INVOKE putstring, ADDR strTemp
+				mWrite <'" was entered.  '>
+				mWrite "Press ENTER to cancel."
+				INVOKE clearSCreen, 3
+				mWrite "Please enter string index to edit: "
+				jmp checkInputL
+			.ENDIF
+			
+			
+		.ELSE
+			INVOKE clearScreen, 25
+			mWrite <9, "<4> Edit String">
+			INVOKE clearScreen, 2
+			showStrings 10, lpStrList
+			INVOKE clearScreen, 3
+			mWrite "** No string selected.  Returning to main menu. **"
+		.ENDIF
+	.ELSE
+		INVOKE clearScreen, 3
+		mWrite "** ERROR String Manager is EMPTY.  "
+		mWrite "Please add a string before deleting. **"
+	.ENDIF
+
+	INVOKE clearScreen, 3
+	mWriteString strCont
+	INVOKE ReadChar
+
+	ret
+
+editString ENDP
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 END main

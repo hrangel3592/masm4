@@ -13,7 +13,7 @@
 ;**************************************************************************
 
 	.486			; enables assembly nonprivileged instructions for 80486 processor
-	 	; directive identifies memory model as flat (protected mode)
+	.model flat	; directive identifies memory model as flat (protected mode)
 
 	; receives a number of requested bytes to be allocated in memory
 	; returns 0 if memory is not available, otherwise

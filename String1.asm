@@ -9,7 +9,7 @@
 ;				String1 implements all methods listed in MASM3 spec for String1
 ;*******************************************************************************
 	.486			; enables instructions for 80486 cpu
-			; flat memory model
+	.model flat		; flat memory model
 
 
 	;allocates memory for a new string
@@ -20,7 +20,7 @@
 	.code
 
 ;-------------------------------------------------------------------------------
-String_length proc Near32 STDCALL PUBLIC
+String_length proc Near32 PUBLIC
 ; 	ebp+8: dword
 ;	returns: dword
 ;	This proc reveieves address of a string and returns the string length

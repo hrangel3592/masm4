@@ -1,12 +1,12 @@
 
 
 	
-	EXTERN String_equals:Near32, String_equalsIgnoreCase:Near32, String_copy:Near32,
+	EXTERNDEF String_equals:Near32, String_equalsIgnoreCase:Near32, String_copy:Near32,
 		   String_substring_1:Near32, String_substring_2:Near32, String_charAt:Near32,
 		   String_startsWith_1:Near32, String_startsWith_2:Near32, String_endsWith:Near32,
 		   String_length:Near32
 
-	EXTERN String_indexOf_1:Near32, String_indexOf_2:Near32, String_indexOf_3:Near32,
+	EXTERNDEF String_indexOf_1:Near32, String_indexOf_2:Near32, String_indexOf_3:Near32,
 		   String_lastIndexOf_1:Near32, String_lastIndexOf_2:Near32,
 		   String_lastIndexOf_3:Near32, String_concat:Near32, String_replace:Near32,
 		   String_toLowerCase:Near32, String_toUpperCase:Near32
