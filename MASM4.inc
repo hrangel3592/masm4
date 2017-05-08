@@ -102,7 +102,7 @@ continueLoopL:
 ENDM
 
 
-comment @
+
 showList MACRO strTitle:REQ, midClear:REQ, 
 	botClear, botMsg, lastClear, lastMsg
 	INVOKE clearScreen, 25
@@ -122,4 +122,3 @@ showList MACRO strTitle:REQ, midClear:REQ,
 		mWrite "&lastMsg"
 	ENDIF
 ENDM
-@	
