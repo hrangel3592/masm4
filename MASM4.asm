@@ -645,13 +645,12 @@ initLoopL:
 				lea esi, dword ptr [edi + ecx * TYPE lpStrList]
 				mov ebx, [esi]
 				.IF(ebx != 0)
+					mov ebx, 0
 					mov dTemp, esi				
 					push 0
 					push offset strBuffer
 					push [esi]
 					CALL String_indexOf_3
-					
-
 					.IF (EAX != -1)
 	comment @
 						push eax
