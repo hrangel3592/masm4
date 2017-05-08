@@ -9,7 +9,7 @@
 ;				String1 implements all methods listed in MASM3 spec for String1
 ;*******************************************************************************
 	.486			; enables instructions for 80486 cpu
-	.model flat		; flat memory model
+			; flat memory model
 
 
 	;allocates memory for a new string
@@ -20,7 +20,7 @@
 	.code
 
 ;-------------------------------------------------------------------------------
-String_length proc Near32
+String_length proc Near32 STDCALL PUBLIC
 ; 	ebp+8: dword
 ;	returns: dword
 ;	This proc reveieves address of a string and returns the string length
@@ -159,6 +159,7 @@ String_equalsIgnoreCase endp		; end of proc
 ;-------------------------------------------------------------------------------
 String_copy proc Near32
 ; 	ebp+8  : dword
+;	ebp+12 : dword
 ;	returns: dword
 ;	This proc recieves a string and then allocates memory for a 2nd string and
 ;	copies over the 1st string into the address of the 2nd string. It returns the
@@ -177,21 +178,17 @@ String_copy proc Near32
 	mov ecx, eax		; stores the string length
 	inc ecx				; increments string length +1
 
-	; create space in memory for new string
-	invoke memoryallocBailey, ecx
+	mov edi, [ebp+12]	; move dynamic pointer to edi
 
-	jz finished		; checks zero flag and jumps to finished if true
-	mov edi, eax	; moves address from memoryallocBailey into edi
-
-	cld				; clear direction forward
-	rep movsb		; copy the string
-
-finished:			; cleanup
+	cld					; clear direction forward
+	rep movsb			; copy the string
+	
+	mov eax, [ebp+12]	; return dynamic address
 	pop ecx			; restoring stack
 	pop edi			; restore edi
 	pop esi			; restore esi
 	leave			; restore local and ebp
-	ret 4			; ret address and args cleanup
+	ret 8			; ret address and args cleanup
 String_copy endp	; end of proc
 
 ;-------------------------------------------------------------------------------
