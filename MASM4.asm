@@ -77,7 +77,7 @@ main PROC							; label for entry point of code segment
 			mov hThisHeap, eax
 		.ENDIF
 		
-		setWindow 170, 300
+		setWindow 170, 25
 				
 		INVOKE clearScreen, 25
 		mWriteString strHeader
@@ -677,12 +677,12 @@ initLoopL:
 							jmp errorHeapL
 							mwrite "heap error"
 							call readchar
-						.ENDIF	
-				
+						.ENDIF				
 						mov dword ptr [edi], eax
 						push eax
 						push [esi]
 						CALL String_copy
+
 						
 						mov esi, offset strBuffer
 						push esi
@@ -703,13 +703,17 @@ initLoopL:
 							mov edx, 0
 							mov esi, [edi]
 							add esi, strIndex
-							invoke putstring, esi
-							call readchar
+;		invoke putstring, esi
+;		call readchar
 							.WHILE(edx < dSubLen)
-								and byte ptr [esi + edx], 11011111b
+								mov al, byte ptr [esi + edx]
+								.IF (al >= "a" && al <= "z")
+									and byte ptr [esi + edx], 11011111b
+								.ENDIF
 								inc edx
 							.ENDW
 							
+							mov dFoundCount, ebx
 							mov edx, dSubLen
 							add strIndex, edx
 							mov esi, strIndex
@@ -720,7 +724,7 @@ initLoopL:
 
 						.ENDW
 					.ENDIF
-					mov dFoundCount, ebx
+;					mov dFoundCount, ebx
 				.ENDIF
 				mov ecx, dListIndex
 				inc ecx
@@ -752,9 +756,18 @@ initLoopL:
 		.ELSE
 			mWrite " times."
 		.ENDIF
+;comment @		
+		mov ecx, LENGTHOF strFoundList
 		
-;		INVOKE HeapDestroy, hHeap
-
+deallocLoop:
+		lea esi, strFoundList
+		lea edi, dword ptr [esi + ecx * TYPE strFoundList - TYPE strFoundList]
+		mov ebx, [edi]
+		.IF (ebx != 0)
+			INVOKE HeapFree, hHeap, 0, [edi]
+		.ENDIF
+		loop deallocLoop
+;
 		INVOKE clearScreen, 3
 		mWriteString strCont
 		INVOKE ReadChar	
