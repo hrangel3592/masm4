@@ -57,6 +57,10 @@
 	; searches for subseq in list of str
 	searchString PROTO Near32 STDCALL, hHeap:HANDLE, lpStrList:dword, lpStrCount:dword
 
+	; gets ptr to array of str ptrs
+	; gets total mem consumption
+	memConsumption PROTO Near32 STDCALL, lpStrList:dword
+
 	; gets a character without echo
 	; returns character to AL register
 	getch PROTO Near32 stdcall
@@ -134,7 +138,9 @@ stringLoop:															; loop to output str
 	.IF (ebx == 0)													; check if addr null
 		jmp continueLoopL											; continue
 	.ELSE															; else dir
+		mWrite '"'													; show quote
 		INVOKE putstring, ebx										; show string
+		mWrite '"'													; show quote
 	.ENDIF															; endif dir
 continueLoopL:														; loop after output str
 	inc dNum														; next index
