@@ -15,7 +15,7 @@
 
 	.486				; enables assembly nonprivileged instructions for 80486 processor
 	INCLUDE MASM4.inc	; include file contains all declarations
-	
+
 HEAP_START = 1200		; initial heap size
 HEAP_MAX   = 2000000	; max heap size
 CHAR_MAX   = 127		; max number of characters to be entered
@@ -40,20 +40,22 @@ strInsert	byte  "Please enter a selection: ", 0				; prompt to enter selection
 strCont 	byte  "Press any key to continue...", 0				; press any key to continue
 dStrList	dword 10 DUP(0)										; array of str pointers
 strInput    byte  2 DUP(0)										; single char input str
-dStrCnt		dword 0												; count of strings in list
+dStrCnt		 dword 0												; count of strings in list
 strBuffer	byte  132 DUP (0)									; input buffer
 hThisHeap   HANDLE ?											; heap handle
+dMemConsum dword 0
 
 	.code			; directive marking the program's entry point
-main PROC			; label for entry point of code segment		
+main PROC			; label for entry point of code segment
+mov dMemConsum, 0	;sets memory consumption to 0
 		INVOKE HeapCreate, 0, HEAP_START, HEAP_MAX				; create private heap
 		.IF eax == NULL											; check if return is null
 			CALL WriteWindowsMsg								; show errors
 			jmp exitL											; exit program
 		.ELSE 													; else condition
 			mov hThisHeap, eax									; save heap handle
-		.ENDIF													; end if	
-		setWindow 170, 25										; force window size		
+		.ENDIF													; end if
+		setWindow 170, 25										; force window size
 		INVOKE clearScreen, 25									; clear screen 25 spaces
 		mWriteString strHeader									; show header
 		INVOKE clearScreen, 9									; show 9 spaces
@@ -65,7 +67,7 @@ main PROC			; label for entry point of code segment
 		INVOKE clearScreen, 8									; show 8 spaces
 		mWriteString strInsert									; prompt for input
 		INVOKE getString, ADDR strInput, 1						; method to get input
-		INVOKE ascint32, ADDR strInput							; convert input to number	
+		INVOKE ascint32, ADDR strInput							; convert input to number
 		.WHILE (EAX != 7)										; exit on 7
 			.IF(EAX < 1 || EAX > 7)								; error check
 				INVOKE clearScreen, 25							; clear screen 25 spaces
@@ -78,21 +80,23 @@ main PROC			; label for entry point of code segment
 				mWrite <"Please enter a number from 1 to 7.">	; invalid message prompt
 				INVOKE clearScreen, 3							; clear screen 3 spaces
 				jmp getInputL									; loop to get input
-			.ENDIF												; end input		
+			.ENDIF												; end input
 			.IF(EAX == 1)										; option 1 all strings
 				INVOKE viewStrings, ADDR dStrList				; call view strings method
 			.ELSEIF (EAX == 2)									; optoin 2 add string
 				INVOKE addString, hThisHeap, ADDR dStrList, 	; call addstring
-					ADDR dStrCnt								; pass str count
+					ADDR dStrCnt										; pass str count
 			.ELSEIF (EAX == 3)									; option 3 delete string
 				INVOKE delString, hThisHeap, ADDR dStrList,		; call delete string
-					ADDR dStrCnt								; pass str count
+					ADDR dStrCnt										; pass str count
 			.ELSEIF (EAX == 4)									; option 4 edit string
 				INVOKE editString, hThisHeap, ADDR dStrList,	; call edit string
-					ADDR dStrCnt								; pass str count
+					ADDR dStrCnt										; pass str count
 			.ELSEIF (EAX == 5)									; option 5 search string
 				INVOKE searchString, hThisHeap, ADDR dStrList,	; call search string
 					ADDR dStrCnt								; pass str count
+			.ELSEIF (EAX == 6)
+				call memConsumption;
 			.ENDIF												; end if directive
 			INVOKE clearScreen, 25								; clear screen 25 spaces
 			mWriteString strMenu1								; show menu 1st part
@@ -114,7 +118,7 @@ exitL:															; exit label
 main ENDP														; end of main proc
 
 ;-----------------------------------------------------
-clearScreen PROC Near32 STDCALL USES ECX, 
+clearScreen PROC Near32 STDCALL USES ECX,
 	dCount:dword		; count of new lines
 ;
 ; receives count of space desired
@@ -176,8 +180,13 @@ addString PROC Near32 STDCALL USES EDI ECX EBX EAX ESI,
 			push esi											; push esi to stack
 			CALL String_length									; get length of string
 			inc eax												; one for space
+add dMemConsum, eax					; adds byte size into memConsumption
 			INVOKE HeapAlloc, hHeap, HEAP_ZERO_MEMORY, eax		; allocate space for string
 			.IF (eax == NULL)									; if heap full or error
+push esi										;pushes esi to stack
+CALL String_length					;gets string length
+inc eax											; adds one to get size
+sub dMemConsum, eax				;subracts size from memConsumption if an error occurs
 				jmp errorHeapL									; go to error msg
 			.ENDIF												; end if
 			mov lpTemp, eax										; dynamic address to var
@@ -185,7 +194,7 @@ addString PROC Near32 STDCALL USES EDI ECX EBX EAX ESI,
 			push esi											; push addr of input
 			CALL String_copy									; copy str to dynamic space
 			mov edi, lpStrList									; set edi to array list
-			mov esi, [dTemp]									; set esi to index							
+			mov esi, [dTemp]									; set esi to index
 			mov [edi + esi * TYPE lpStrList], eax				; add dynamic str to array
 			INVOKE clearScreen, 25								; clear screen
 			mWrite <9, "<2> Add String">						; show title of section
@@ -194,7 +203,7 @@ addString PROC Near32 STDCALL USES EDI ECX EBX EAX ESI,
 			INVOKE clearScreen, 3								; show spaces
 			mWrite <9, "SUCCESSFULLY ADDED STRING: [">			; show succes prompt
 			INVOKE intasc32, ADDR strBuffer, [dTemp]			; convert index to char
-			INVOKE putstring, ADDR strBuffer					; show index 
+			INVOKE putstring, ADDR strBuffer					; show index
 			mWrite <'] "'>										; show bracket
 			INVOKE putstring, lpTemp							; show string
 			mWrite <'"'>										; show quotes
@@ -294,7 +303,7 @@ getConfirmL:													; show confirm label
 				INVOKE clearScreen, 25							; clear screen
 				mWrite <9, "<3> Delete String">					; section name
 				INVOKE clearScreen, 2							; show space
-				showStrings 10, lpStrList						; show string list
+				showStrings 10, lpStrList						; show strin g list
 				INVOKE clearScreen, 3							; show space
 				mWrite <9, "Deleting: [">						; show index delete
 				INVOKE putstring, ADDR strTemp					; show index
@@ -306,6 +315,10 @@ getConfirmL:													; show confirm label
 				mov bl, byte ptr [strBuff]						; set bl to char
 				and bl, 11011111b								; make uppercase
 				.IF (bl == 'Y')									; check if char is y
+push edi						; pushes address of strTemp to stack
+call String_length						; gets string length of strTemp
+inc eax												; increments size by 1
+sub dMemConsum, eax					; adds bytes to memConsumption
 					INVOKE HeapFree, hHeap, 0, [edi]			; dealloc space on heap
 					.if eax == null								; check if error
 						call crlf								; show space
@@ -347,7 +360,7 @@ invalidInputL:													; invalid input label
 		.ELSE													; else directive
 			INVOKE clearScreen, 25								; clear screen
 			mWrite <9, "<3> Delete String">						; section title
-			INVOKE clearScreen, 2								; show space	
+			INVOKE clearScreen, 2								; show space
 			showStrings 10, lpStrList							; show string list
 			INVOKE clearScreen, 3								; show space
 			mWrite <9, "*** No string selected.  ">				; show error msg
@@ -369,7 +382,7 @@ editString PROC Near32 STDCALL USES EDI ECX EBX EAX ESI,
 	hHeap:HANDLE,				; heap handle
 	lpStrList:dword,			; ptr to str list
 	lpStrCount:dword			; ptr to str count
-	LOCAL strTemp[2]:byte,		; char input		
+	LOCAL strTemp[2]:byte,		; char input
 		  strBuff[2]:byte,		; char temp
 		  lpTemp:dword,			; pointer to str
 		  dTemp:dword			; pointer to num
@@ -377,7 +390,7 @@ editString PROC Near32 STDCALL USES EDI ECX EBX EAX ESI,
 ; receives heap handle, ptr to str array and ptr to
 ;	str count
 ; allows user to edit a string in the str list
-;-----------------------------------------------------		  
+;-----------------------------------------------------
 editMainL:														; main loop label
 	INVOKE clearScreen, 25										; clear screen
 	mWrite <9, "<4> Edit String">								; section header
@@ -419,12 +432,16 @@ getConfirmL:													; get confirmation label
 				mov bl, byte ptr [strBuff]						; set bl to char input
 				and bl, 11011111b								; make uppercase
 				.IF (bl == 'Y')									; check if char Y
+push edi						; push string in edi to stack
+call String_length	; returns string length
+inc eax							; adds 1 to size
+sub dMemConsum, eax ;adds byte size to mem consumption
 					INVOKE clearScreen, 25						; clear screen
 					mWrite <9, "<4> Edit String">				; section header
 					INVOKE clearScreen, 2						; show space
 					showStrings 10, lpStrList					; show strings
 					INVOKE clearScreen, 3						; show space
-					mWrite <9, "Editing: [">					; show edit index prompt	
+					mWrite <9, "Editing: [">					; show edit index prompt
 					INVOKE putstring, ADDR strTemp				; show index
 					mWrite <"] ">								; show bracket
 					INVOKE putstring, [edi]						; show string
@@ -444,15 +461,20 @@ getConfirmL:													; get confirmation label
 						push esi								; push esi to stack
 						CALL String_length						; get string inp len
 						inc eax									; inc len by one
+add dMemConsum, eax		;adds size to mem consumption
 						INVOKE HeapAlloc, hHeap, 				; call heap alloc
 							HEAP_ZERO_MEMORY, eax 				; heap alloc parameters
 						.IF (eax == NULL)						; check if heap error
+push esi		         ;push esi to stack
+CALL String_length   ; get string length
+inc eax						   ; increment size by 1
+sub dMemConsum, eax ; subtracts size if there was an error
 							jmp errorHeapL						; jump to error section
 						.ENDIF									; endif directive
 						mov lpTemp, eax							; set var to heap addr
 						push eax								; push heap addr to stack
 						push esi								; push str input to stack
-						CALL String_copy						; call str cpy	
+						CALL String_copy						; call str cpy
 						mov edi, lpStrList						; set edi to ptr to list
 						mov esi, dTemp							; set esi to index
 						mov [edi + esi * TYPE lpStrList], eax	; move heap alloc to list
@@ -462,7 +484,7 @@ getConfirmL:													; get confirmation label
 						showStrings 10, lpStrList				; show string list
 						INVOKE clearScreen, 3					; show space
 						mWrite <9, "SUCCESSFULLY EDITED ">		; show success msg
-						mWrite <"STRING: [">					; show sucess msg cont									
+						mWrite <"STRING: [">					; show sucess msg cont
 						INVOKE putstring, ADDR strTemp			; show index
 						mWrite <'] "'>							; show bracket
 						INVOKE putstring, lpTemp				; show string
@@ -564,7 +586,7 @@ searchString PROC Near32 STDCALL USES EDI ECX EBX EAX ESI EDX,
 		mWrite "Please enter the target string: "				; prompt for string
 checkInputL:  													; check input label
 		INVOKE getString, ADDR strBuffer, CHAR_MAX				; get input for string
-		mov bl, byte ptr [strBuffer]							; set bl to first char	
+		mov bl, byte ptr [strBuffer]							; set bl to first char
 		.IF(bl != 0)											; check if char null
 			mov ecx, LENGTHOF strFoundList						; set ecx to len of arr
 			lea edi, strFoundList								; set edi as ptr to arr
@@ -629,7 +651,7 @@ initLoopL:														; init loop to 0 label
 								.ENDIF							; endif directive
 								inc edx							; next index
 							.ENDW								; end while loop
-							mov dFoundCount, ebx				; update foundcount	
+							mov dFoundCount, ebx				; update foundcount
 							mov edx, dSubLen					; set edx to sub len
 							add strIndex, edx					; advance index in str
 							push strIndex						; push str to stack
@@ -697,6 +719,27 @@ errorHeapL:														; error heap label
 searchString ENDP												; end proc
 
 
+
+;-----------------------------------------------------
+memConsumption PROC Near32
+	LOCAL lpStrTemp:dword				; used to hold sring of memConsum
+
+;
+; receives a variable that contains the current memory consumption
+;	used by the string array.
+;-----------------------------------------------------
+
+	.IF (dMemConsum == 0)
+		mWrite <9, "*** LIST IS CURRENTLY EMPTY ***">
+	.ELSE
+		mWrite <9, "Current memory consumption is: ">
+		INVOKE intasc32, lpStrTemp, dMemConsum
+		INVOKE putstring, lpStrTemp
+	.ENDIF
+
+	ret
+
+memConsumption ENDP
 
 
 
