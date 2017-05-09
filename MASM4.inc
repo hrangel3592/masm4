@@ -1,23 +1,66 @@
-
-
+;**************************************************************************
+; Name:   		Hernan Rangel & Peter Tang
+; Program:		MASM4.asm
+; Class:        CS 3B
+; Project:		MASM4
+; Date:         May 8, 2017
+; Purpose:
+;		This is an include file accompanying the MASM4.asm source code
+;**************************************************************************
 	
+	; String1.asm methods
 	EXTERNDEF String_equals:Near32, String_equalsIgnoreCase:Near32, String_copy:Near32,
 		   String_substring_1:Near32, String_substring_2:Near32, String_charAt:Near32,
 		   String_startsWith_1:Near32, String_startsWith_2:Near32, String_endsWith:Near32,
 		   String_length:Near32
-
+	
+	; String2.asm methods
 	EXTERNDEF String_indexOf_1:Near32, String_indexOf_2:Near32, String_indexOf_3:Near32,
 		   String_lastIndexOf_1:Near32, String_lastIndexOf_2:Near32,
 		   String_lastIndexOf_3:Near32, String_concat:Near32, String_replace:Near32,
 		   String_toLowerCase:Near32, String_toUpperCase:Near32
-		   
+	
+	; inc files from irvine library
 	INCLUDE ..\Irvine\Irvine32.inc
 	INCLUDE ..\Irvine\Macros.inc
+	
+	; lib files from irvine library
 	INCLUDELIB ..\Irvine\Irvine32.lib 
 	INCLUDELIB \masm32\lib\user32.lib
 	INCLUDELIB \masm32\lib\kernel32.lib
+	
+	; gets a count of how many new lines
+	; outputs new lines to console
+	clearScreen PROTO Near32 STDCALL, dCount:dword
+	
+	; gets addr of array of strings
+	; outputs strings in array to console
+	viewStrings PROTO Near32 STDCALL, lpStrList:dword
+	
+	; gets heap handle, ptr to array of str ptrs, ptr to str count
+	; adds string to array of str ptrs
+	addString PROTO Near32 STDCALL, hHeap:HANDLE, lpStrList:dword, lpStrCount:dword	
 
-		   
+	; gets heap handle, ptr to array of str ptrs, ptr to str count
+	; gets index of array without str addr
+	getEmptyIndex PROTO Near32 STDCALL, lpStrList:dword, lpNum:dword
+	
+	; gets heap handle, ptr to array of str ptrs, ptr to str count
+	; deletes string from array
+	delString PROTO Near32 STDCALL, hHeap:HANDLE, lpStrList:dword, lpStrCount:dword
+	
+	; gets heap handle, ptr to array of str ptrs, ptr to str count
+	; edits a string in the array
+	editString PROTO Near32 STDCALL, hHeap:HANDLE, lpStrList:dword, lpStrCount:dword
+	
+	; gets heap handle, ptr to array of str ptrs, ptr to str count
+	; searches for subseq in list of str
+	searchString PROTO Near32 STDCALL, hHeap:HANDLE, lpStrList:dword, lpStrCount:dword
+
+	; gets a character without echo
+	; returns character to AL register
+	getch PROTO Near32 stdcall
+	
 	; converts a string of characters to an equivalent 4-byte dword  value
 	; binary value is returned into EAX register, 
 	; if invalid char or too large, EAX = 0
@@ -42,83 +85,63 @@
 	; requires a value for third parameter, length of value or 0 for entire length
 	hexToChar PROTO Near32 stdcall, lpDestStr: dword, lpSourceStr: dword, dLen: dword
 	
+;-----------------------------------------------------
 setWindow MACRO dWidth:REQ, dHeight:REQ
 	LOCAL dwSize, dWinSize, outHandle
-	.data
-	dwSize  COORD <dWidth, dHeight>
-	dWinSize SMALL_RECT <0, 0, dWidth - 1, dHeight - 1>
-	outHandle HANDLE ?
-	
-	.code	
-	push eax
-	INVOKE GetStdHandle, STD_OUTPUT_HANDLE
-	mov outHandle, eax	
-	INVOKE SetConsoleWindowInfo, outHandle, TRUE, ADDR dWinSize
-	INVOKE SetConsoleScreenBufferSize, outHandle, dwSize
-	INVOKE SetConsoleWindowInfo, outHandle, TRUE, ADDR dWinSize
-	INVOKE SetConsoleScreenBufferSize, outHandle, dwSize
-	pop eax
-ENDM
+;
+; receives a width and height for buffer/console win
+; sets the buffer and console window
+;-----------------------------------------------------
+	.data															; data directive
+	dwSize  COORD <dWidth, dHeight>									; coord struct
+	dWinSize SMALL_RECT <0, 0, dWidth - 1, dHeight - 1>				; window rect struct
+	outHandle HANDLE ?												; stdout handle
+	.code															; code dir
+	push eax														; save eax on stack
+	INVOKE GetStdHandle, STD_OUTPUT_HANDLE							; get stdout handle
+	mov outHandle, eax												; set outhandle
+	INVOKE SetConsoleWindowInfo, outHandle, TRUE, ADDR dWinSize		; set window
+	INVOKE SetConsoleScreenBufferSize, outHandle, dwSize			; set console
+	INVOKE SetConsoleWindowInfo, outHandle, TRUE, ADDR dWinSize		; set window
+	INVOKE SetConsoleScreenBufferSize, outHandle, dwSize			; set console
+	pop eax															; restore eax
+ENDM																; endmacro
 
+;-----------------------------------------------------
 showStrings MACRO dNumStrings:REQ, lpStrArr:REQ
 	LOCAL strNum, dNum, dTemp, stringLoop, continueLoopL
-	.data
-	strNum byte  2 DUP(0)
-	dNum   dword ?
-	dTemp  dword ?
-	
-	.code
-	push ecx
-	push esi
-	push ebx
-	
-	mov dNum, 0
-	mov ecx, dNumStrings
-	mov esi, lpStrArr
-
-stringLoop:
-	mWrite <9, "[">
-	INVOKE intasc32, ADDR strNum, dNum
-	mWriteString strNum
-	mWrite <"] ">
-	
-	mov ebx, [esi]
-	.IF (ebx == 0)
-		jmp continueLoopL
-	.ELSE
-		INVOKE putstring, ebx
-	.ENDIF
-	
-continueLoopL:
-	inc dNum
-	add esi, type dword
-	CALL CRLF
-	loop stringLoop	
-	
-	pop ebx
-	pop esi
-	pop ecx
+;
+; receives number of strings, pointer to array of str
+; shows strings in array if str ptrs
+;-----------------------------------------------------
+	.data															; data dir
+	strNum byte  2 DUP(0)											; char str
+	dNum   dword ?													; temp number
+	dTemp  dword ?													; temp var
+	.code															; code dir
+	push ecx														; save ecx
+	push esi														; save esi
+	push ebx														; save ebx
+	mov dNum, 0														; init dnum
+	mov ecx, dNumStrings											; set ecx num str
+	mov esi, lpStrArr												; set esi arr ptr
+stringLoop:															; loop to output str
+	mWrite <9, "[">													; show bracket
+	INVOKE intasc32, ADDR strNum, dNum								; convert int to char
+	mWriteString strNum												; show char
+	mWrite <"] ">													; show bracket
+	mov ebx, [esi]													; set str addr to ebx
+	.IF (ebx == 0)													; check if addr null
+		jmp continueLoopL											; continue
+	.ELSE															; else dir
+		INVOKE putstring, ebx										; show string
+	.ENDIF															; endif dir
+continueLoopL:														; loop after output str
+	inc dNum														; next index
+	add esi, type dword												; next addr in arr
+	CALL CRLF														; show space
+	loop stringLoop													; show next line/index
+	pop ebx															; restore ebx
+	pop esi															; restore esi
+	pop ecx															; restore ecx
 ENDM
-
-
-comment #
-showList MACRO strTitle:REQ, midClear:REQ, 
-	botClear, botMsg, lastClear, lastMsg
-	INVOKE clearScreen, 25
-	mWrite <9, "&strTitle">
-	INVOKE clearScreen, midClear
-	showStrings 10, lpStrList
-	IFNB <botClear>
-		INVOKE clearScreen, botClear
-	ENDIF
-	IFNB <botMsg>
-		mWrite <9, "&botMsg">
-	ENDIF
-	IFNB <lastClear>
-		INVOKE clearScreen, lastClear
-	ENDIF
-	IFNB <lastMsg>
-		mWrite "&lastMsg"
-	ENDIF
-ENDM
-#
