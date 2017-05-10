@@ -225,7 +225,21 @@ stringLoop:							; label for string loop
 substringLoop:						; label for looping thru substr
 	cmp dSubstringIndex, ebx		; compare substr index to substr length
 	je foundL						; ZF=1? jump to found label
-	cmpsb							; compare char in esi and edi
+	push ebx						; save ebx
+	push edx						; save edx
+	mov bl, [esi]					; move char in esi to bl
+	mov dl, [edi]					; move char in edi to dl
+	.IF (bl >= 'a') && (bl <='z')	; if char in bl a-z
+		and bl, 11011111b			; make uppercase
+	.ENDIF							; end if
+	.IF (dl >= 'a') && (bl <='z')	; if char in dl a-z
+		and dl, 11011111b			; make uppercase
+	.ENDIF							; endif
+	inc esi							; Increment esi and edi for next character
+	inc edi							; inc edi
+	cmp bl, dl						; compares characters
+	pop edx							; restore edx
+	pop ebx							; restore ebx
 	jne incStringL					; ZF=0? jump to increment string
 	inc dword ptr dSubstringIndex	; increment substring index
 	jmp substringLoop				; continue checking for substring
